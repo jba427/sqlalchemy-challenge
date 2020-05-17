@@ -45,32 +45,53 @@ def home():
 def precipitation():
     #return "Precipitation Home"
     session = Session(engine)
-    conn = engine.connect()
-    sql = "SELECT date, prcp FROM measurement WHERE date > '2016-08-23'"
+    start_date='08-23-2016' 
+    precip = session.query(measurement.date, measurement.prcp).\
+        filter(measurement.date >= start_date).all()
+    #print(precip)
+    session.close()
+    precip_return = {"prcp": precip}
 
-    # Save the query results as a Pandas DataFrame and set the index to the date column
-    # Sort the dataframe by date
-    rain = pd.read_sql(sql, conn)
-    rain.sort_values(by=['date'], ascending=True)
-    rain.fillna(0, inplace=True)
-    rain.set_index('date')
-    rain = rain.to_json()
-    return jsonify(rain)
-
-
-
-
+    return jsonify(precip_return)
+    
 @app.route("/api/v1.0/stations")
 def stations():
-    return "Stations Home"
+    #return "Stations Home"
+   session = Session(engine)
+   stations = session.query(measurement.station).\
+       group_by(measurement.station).all()
+   session.close()
+   station_return = {"Stations": stations}
+
+   return jsonify(station_return)
     
 @app.route("/api/v1.0/tobs")
 def tobs():
-    return "TOBS Home"
+   #return "TOBS Home"
+   session = Session(engine)
+   start_date='08-23-2016' 
+   precip = session.query(measurement.date, measurement.prcp).\
+        filter(measurement.date >= start_date).\
+        filter(measurement.station=='USC00519281').all()
+   #print(precip)
+   session.close()
+   precip_return = {"prcp": precip}
+
+   return jsonify(precip_return)
     
 @app.route("/api/v1.0/start")
 def start():
-    return "Start Home"
+   min_temp = session.query(func.min(measurement.tobs)).\
+       filter(measurement.station=='USC00519281').all()
+   max_temp = session.query(func.max(measurement.tobs)).\
+       filter(measurement.station=='USC00519281').all()
+   avg_temp = session.query(func.avg(measurement.tobs)).\
+       filter(measurement.station=='USC00519281').all()
+
+   results = {"MinTemp": min_temp, "MaxTemp": max_temp, "AvgTemp": avg_temp}
+   session.close()
+
+   return jsonify(results)
 
 @app.route("/api/v1.0/start/end")
 def end():
